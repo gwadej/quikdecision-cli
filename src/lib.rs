@@ -1,0 +1,70 @@
+extern crate quikdecision;
+
+use std::env;
+
+use quikdecision::{coin,pick,percent,dice,select,oracle};
+use quikdecision::Command;
+
+mod help;
+
+pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
+{
+    let progname = args.next().unwrap();
+    let cmd = match args.next()
+    {
+        Some(c) => c,
+        None => return Err(String::from("Missing decision type")),
+    };
+    let all_hints = vec![
+        coin::hint(),
+        pick::hint(),
+        percent::hint(),
+        dice::hint(),
+        select::hint(),
+        oracle::hint(),
+        help::hint(),
+    ];
+
+    match &cmd[..]
+    {
+        "coin" | "flip" => coin::command(),
+        "pick" => match (int_arg::<i32>(args.next()), int_arg::<i32>(args.next()))
+        {
+            (Ok(low), Ok(high)) => pick::command(low, high),
+            (Err(e),  _) => return Err(format!("low arg: {}", e)),
+            (_,       Err(e)) => return Err(format!("high arg: {}", e)),
+        },
+        "percent" | "likely" => percent::command(int_arg::<u32>(args.next())?),
+        "roll"  => dice::command(args_to_string(&mut args)),
+        "select" => select::command(args_to_string_vec(&mut args)),
+        "oracle" => oracle::command(),
+        "help" => help::usage(progname, args.next(), all_hints),
+        "man" => help::help(progname, args.next(), all_hints),
+        _ => Err(String::from("Unknown command")),
+    }
+}
+
+fn args_to_string(args: &mut env::Args) -> String
+{
+    args.collect::<Vec<String>>().join(" ")
+}
+
+fn args_to_string_vec(args: &mut env::Args) -> Vec<String>
+{
+    args.into_iter().collect::<Vec<String>>()
+}
+
+pub fn int_arg<T>(opt: Option<String>) -> Result<T, String>
+where
+T: std::str::FromStr,
+{
+    match opt
+    {
+        None => Err(String::from("Missing required parameter")),
+        Some(arg) => match arg.parse::<T>()
+        {
+            Ok(a) => Ok(a),
+            Err(_) => Err(String::from("Argument not a valid integer")),
+        },
+    }
+}
