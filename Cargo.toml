@@ -13,3 +13,7 @@ license = "MIT"
 rand = "0.5.5"
 regex = "1"
 quikdecision = { git = "https://github.com/gwadej/quikdecision_rust", branch = "library" }
+
+[lib]
+
+name = "cli"

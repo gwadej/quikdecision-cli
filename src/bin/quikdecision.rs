@@ -6,7 +6,7 @@ use std::env;
 
 fn main()
 {
-    match quikdecision_cli::parse_args(env::args())
+    match cli::parse_args(env::args())
     {
         Ok(cmd) => {
             println!("{}",
