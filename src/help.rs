@@ -1,6 +1,8 @@
 use std::iter::once;
 use quikdecision::ApiDoc;
 
+type Help = (&'static str, ApiDoc);
+
 fn format_arg(arg: &str) -> String
 {
     if arg.ends_with("]") || arg.ends_with("}")
@@ -43,13 +45,13 @@ fn print_help(cmd: &str, doc: &ApiDoc)
     }
 }
 
-pub fn usage(progname: String, cmd: Option<String>, docs: Vec<(&str, ApiDoc)>) -> !
+pub fn usage(progname: String, cmd: Option<String>, docs: Vec<Help>) -> !
 {
     match cmd
     {
         None => {
-            println!("{} {}\n", progname, "{command} [cmd_args ...]");
-            println!("{}\n", "where {command} is one of:");
+            println!("{} {{command}} [cmd_args ...]\n", progname);
+            println!("where {{command}} is one of:\n");
             for (cmd, doc) in docs
             {
                 print_hint(cmd, &doc);
@@ -66,20 +68,20 @@ pub fn usage(progname: String, cmd: Option<String>, docs: Vec<(&str, ApiDoc)>) -
     std::process::exit(1);
 }
 
-fn find_hints<'a>(docs: &'a Vec<(&'a str, ApiDoc)>, cmd: String) -> Vec<&(&'a str, ApiDoc)>
+fn find_hints<'a>(docs: &'a Vec<Help>, cmd: String) -> Vec<&Help>
 {
     docs.iter()
         .filter(|d| d.0 == cmd)
-        .collect::<Vec<&(&'a str, ApiDoc)>>()
+        .collect::<Vec<&(&str, ApiDoc)>>()
 }
 
-pub fn help(progname: String, cmd: Option<String>, docs: Vec<(&str, ApiDoc)>) -> !
+pub fn help(progname: String, cmd: Option<String>, docs: Vec<Help>) -> !
 {
     match cmd
     {
         None => {
-            println!("{} {}\n", progname, "{command} [cmd_args ...]");
-            println!("{}\n", "where {command} is one of:");
+            println!("{} {{command}} [cmd_args ...]\n", progname);
+            println!("where {{command}} is one of:\n");
             for (name, doc) in docs
             {
                 print_help(name, &doc);
