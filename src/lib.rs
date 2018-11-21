@@ -6,7 +6,7 @@ use std::io::prelude::*;
 use std::iter::once;
 
 use quikdecision::{coin,pick,percent,dice,select,oracle};
-use quikdecision::Command;
+use quikdecision::{Command,ApiDoc};
 
 mod help;
 
@@ -20,6 +20,19 @@ pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
         Some(c) => c,
         None => return Err(String::from("Missing decision type")),
     };
+
+    let select_other_doc = ApiDoc
+    {
+        name: "select",
+        params: vec!["@{filename}"],
+        hint: "Select one of two or more strings supplied in a file.",
+        help: vec![
+             "Loads a series of strings from the specified file. (Each line is one string.)",
+             "Selects one of the supplied strings with equal probability. There must be",
+             "at least two strings to choose between.",
+        ],
+    };
+
     let all_docs = vec![
         ("coin",    coin::api_doc()),
         ("flip",    coin::api_doc()),
@@ -28,6 +41,7 @@ pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
         ("likely",  percent::api_doc()),
         ("roll",    dice::api_doc()),
         ("select",  select::api_doc()),
+        ("select",  select_other_doc),
         ("oracle",  oracle::api_doc()),
         ("help",    help::help_doc()),
         ("man",     help::man_doc()),

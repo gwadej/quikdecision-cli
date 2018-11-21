@@ -1,9 +1,23 @@
 use std::iter::once;
 use quikdecision::ApiDoc;
 
+fn format_arg(arg: &str) -> String
+{
+    if arg.ends_with("]") || arg.ends_with("}")
+    {
+        arg.to_string()
+    }
+    else
+    {
+        format!("{{{}}}", arg)
+    }
+}
+
 fn make_clue(cmd: &str, params: &Vec<&str>) -> String
 {
-    once(cmd).chain(params.iter().map(|s| *s)).collect::<Vec<&str>>().join(" ")
+    once(cmd.to_string())
+        .chain(params.iter().map(|s| format_arg(*s)))
+        .collect::<Vec<String>>().join(" ")
 }
 
 fn print_hint(cmd: &str, doc: &ApiDoc)
