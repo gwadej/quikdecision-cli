@@ -1,6 +1,7 @@
 # Quick Decision in Rust
 
-Make random decisions using one of a few different methods.
+Make random decisions using one of a few different methods. Depends on the library
+from https://github.com/gwadej/quikdecision_rust
 
 ## Interface
 
@@ -31,16 +32,18 @@ The interface is pretty simple:
                - {n}d{s}: roll n s-sided dice (3d6)
                - {n}x{s}: roll n s-sided exploding dice (2x8)
                - {n}: an increment.
-             The number of sides support are 4, 6, 8, 10, 12, 20, or 100. Exploding dice work
-             much like normal, except when a die rolls the maximum value for the die, then it
-             is re-rolled to generate a value to add to the original roll. This may happen more
-             than once.
+             The number of sides supported are 4, 6, 8, 10, 12, 20, or 100. Exploding dice
+             work much like normal, except when a die rolls the maximum value for the die,
+             then it is re-rolled to generate a value to add to the original roll. This may
+             happen more than once.
              The return is the sum of all of the rolls followed by a string representing the
-             individual rolls. Normal dice are represented by the expression, followed by the
-             sum of the individual die rolls in parens: 3d6(3+5+1). Exploding dice are
-             represented by the expression followed by an expression in angle brackets. The
-             expression is made of the results of each individual die in parens, with any die
-             that exploded being followed by an !: 3x6<(1)+(6!+5)+(2)>.
+             individual rolls.
+             Normal dice are represented by the expression, followed by the results of the
+             individual die rolls in parens: 3d6(3+5+1).
+             Exploding dice are represented by the dice expression followed by an expression
+             in angle brackets. The expression is made of the results of each individual die
+             in parens, with any die that exploded being followed by an !, and the re-roll
+             added as needed: 3x6<(1)+(6!+5)+(2)>.
       select {strs}
              Selects one of the supplied strings with equal probability. There must be
              at least two strings to choose between.
