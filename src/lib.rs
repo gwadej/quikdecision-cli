@@ -12,6 +12,8 @@ mod help;
 
 type StrVec = Vec<String>;
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
 {
     let progname = args.next().unwrap();
@@ -21,17 +23,6 @@ pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
         None => return Err(String::from("Missing decision type")),
     };
 
-    let select_other_doc = ApiDoc
-    {
-        name: "select",
-        params: vec!["@{filename}"],
-        hint: "Select one of two or more strings supplied in a file.",
-        help: vec![
-             "Loads a series of strings from the specified file. (Each line is one string.)",
-             "Selects one of the supplied strings with equal probability. There must be",
-             "at least two strings to choose between.",
-        ],
-    };
 
     let all_docs = vec![
         ("coin",    coin::api_doc()),
@@ -41,10 +32,11 @@ pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
         ("likely",  percent::api_doc()),
         ("roll",    dice::api_doc()),
         ("select",  select::api_doc()),
-        ("select",  select_other_doc),
+        ("select",  select_other_doc()),
         ("oracle",  oracle::api_doc()),
         ("help",    help::help_doc()),
         ("man",     help::man_doc()),
+        ("version", version_doc()),
     ];
 
     match &cmd[..]
@@ -57,7 +49,34 @@ pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
         "oracle" => oracle::command(),
         "help" => help::usage(progname, args.next(), all_docs),
         "man" => help::help(progname, args.next(), all_docs),
+        "version" => version(),
         _ => Err(String::from("Unknown command")),
+    }
+}
+
+fn select_other_doc() -> ApiDoc
+{
+    ApiDoc
+    {
+        name: "select",
+        params: vec!["@{filename}"],
+        hint: "Select one of two or more strings supplied in a file.",
+        help: vec![
+             "Loads a series of strings from the specified file. (Each line is one string.)",
+             "Selects one of the supplied strings with equal probability. There must be",
+             "at least two strings to choose between.",
+        ],
+    }
+}
+
+fn version_doc() -> ApiDoc
+{
+    ApiDoc
+    {
+        name: "version",
+        params: vec![],
+        hint: "Display the version.",
+        help: vec!["Display version information."],
     }
 }
 
@@ -89,6 +108,14 @@ fn select_command(args: &mut env::Args) ->Result<Command, String>
     };
 
     select::command(strvec)
+}
+
+fn version() -> !
+{
+    println!("quikdecision v{}", VERSION);
+    println!("   lib v{}", quikdecision::version());
+
+    std::process::exit(1);
 }
 
 fn list_from_file(filename: &str) -> Result<StrVec, String>
