@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::iter::once;
 
-use quikdecision::{coin,pick,percent,dice,select,oracle};
+use quikdecision::{coin,pick,percent,dice,select,shuffle,oracle};
 use quikdecision::{Command,ApiDoc};
 
 mod help;
@@ -33,6 +33,8 @@ pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
         ("roll",    dice::api_doc()),
         ("select",  select::api_doc()),
         ("select",  select_other_doc()),
+        ("shuffle", shuffle::api_doc()),
+        ("shuffle", shuffle_other_doc()),
         ("oracle",  oracle::api_doc()),
         ("help",    help::help_doc()),
         ("man",     help::man_doc()),
@@ -45,7 +47,8 @@ pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
         "pick" => pick_command(&mut args),
         "percent" | "likely" => percent::command(int_arg::<u32>(args.next())?),
         "roll"  => dice::command(args_to_string(&mut args)),
-        "select" => select_command(&mut args),
+        "select" => select::command(args_to_strings(&mut args)?),
+        "shuffle" => shuffle::command(args_to_strings(&mut args)?),
         "oracle" => oracle::command(),
         "help" => help::usage(progname, args.next(), all_docs),
         "man" => help::help(progname, args.next(), all_docs),
@@ -65,6 +68,21 @@ fn select_other_doc() -> ApiDoc
              "Loads a series of strings from the specified file. (Each line is one string.)",
              "Selects one of the supplied strings with equal probability. There must be",
              "at least two strings to choose between.",
+        ],
+    }
+}
+
+fn shuffle_other_doc() -> ApiDoc
+{
+    ApiDoc
+    {
+        name: "shuffle",
+        params: vec!["@{filename}"],
+        hint: "Randomly order the strings supplied in a file.",
+        help: vec![
+             "Loads a series of strings from the specified file. (Each line is one string.)",
+             "Randomly change the order of the supplied strings. There must",
+             "be at least two strings to shuffle.",
         ],
     }
 }
@@ -90,7 +108,7 @@ fn pick_command(args: &mut env::Args) -> Result<Command, String>
     }
 }
 
-fn select_command(args: &mut env::Args) ->Result<Command, String>
+fn args_to_strings(args: &mut env::Args) -> Result<Vec<String>,String>
 {
     let first = match args.next()
     {
@@ -107,7 +125,7 @@ fn select_command(args: &mut env::Args) ->Result<Command, String>
         once(first).chain(args).collect::<StrVec>()
     };
 
-    select::command(strvec)
+    Ok(strvec)
 }
 
 fn version() -> !
