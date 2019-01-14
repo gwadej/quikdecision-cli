@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::iter::once;
 
-use quikdecision::{coin,pick,percent,dice,select,shuffle,oracle};
+use quikdecision::{coin,pick,percent,dice,deck,select,shuffle,oracle};
 use quikdecision::{Command,ApiDoc};
 
 mod help;
@@ -31,6 +31,7 @@ pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
         ("percent", percent::api_doc()),
         ("likely",  percent::api_doc()),
         ("roll",    dice::api_doc()),
+        ("draw",    deck::api_doc()),
         ("select",  select::api_doc()),
         ("select",  select_other_doc()),
         ("shuffle", shuffle::api_doc()),
@@ -47,6 +48,7 @@ pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
         "pick" => pick_command(&mut args),
         "percent" | "likely" => percent::command(int_arg::<u32>(args.next())?),
         "roll"  => dice::command(args_to_string(&mut args)),
+        "draw"  => deck::command(args_to_string(&mut args).as_str()),
         "select" => select::command(args_to_strings(&mut args)?),
         "shuffle" => shuffle::command(args_to_strings(&mut args)?),
         "oracle" => oracle::command(),
