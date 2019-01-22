@@ -17,12 +17,7 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
 {
     let progname = args.next().unwrap();
-    let cmd = match args.next()
-    {
-        Some(c) => c,
-        None => return Err(String::from("Missing decision type")),
-    };
-
+    let cmd = args.next().ok_or("Missing decision type".to_string())?;
 
     let all_docs = vec![
         ("coin",    coin::api_doc()),
@@ -55,7 +50,7 @@ pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
         "help" => help::usage(progname, args.next(), all_docs),
         "man" => help::help(progname, args.next(), all_docs),
         "version" => version(),
-        _ => Err(String::from("Unknown command")),
+        _ => Err("Unknown command".to_string()),
     }
 }
 
@@ -102,21 +97,14 @@ fn version_doc() -> ApiDoc
 
 fn pick_command(args: &mut env::Args) -> Result<Command, String>
 {
-    match (int_arg::<i32>(args.next()), int_arg::<i32>(args.next()))
-    {
-        (Ok(low), Ok(high)) => pick::command(low, high),
-        (Err(e),  _) => return Err(format!("low arg: {}", e)),
-        (_,       Err(e)) => return Err(format!("high arg: {}", e)),
-    }
+    let low  = int_arg::<i32>(args.next()).map_err(|e| format!("low arg: {}", e))?;
+    let high = int_arg::<i32>(args.next()).map_err(|e| format!("high arg: {}", e))?;
+    pick::command(low, high)
 }
 
 fn args_to_strings(args: &mut env::Args) -> Result<Vec<String>,String>
 {
-    let first = match args.next()
-    {
-        Some(s) => s,
-        None => return Err(String::from("Missing required strings")),
-    };
+    let first = args.next().ok_or("Missing required strings".to_string())?;
 
     let strvec = if first.starts_with("@")
     {
@@ -140,16 +128,9 @@ fn version() -> !
 
 fn list_from_file(filename: &str) -> Result<StrVec, String>
 {
-    let mut file = match File::open(filename)
-    {
-        Ok(f) => f,
-        Err(_) => return Err(String::from("Cannot open supplied file")),
-    };
+    let mut file = File::open(filename).map_err(|_| "Cannot open supplied file".to_string())?;
     let mut contents = String::new();
-    if let Err(_) = file.read_to_string(&mut contents)
-    {
-        return Err(String::from("Cannot read supplied file"));
-    }
+    file.read_to_string(&mut contents).map_err(|_| "Cannot read supplied file".to_string())?;
     Ok(contents.split("\n")
                .filter(|line| !line.is_empty())
                .map(|s| s.to_string())
@@ -165,13 +146,6 @@ pub fn int_arg<T>(opt: Option<String>) -> Result<T, String>
 where
 T: std::str::FromStr,
 {
-    match opt
-    {
-        None => Err(String::from("Missing required parameter")),
-        Some(arg) => match arg.parse::<T>()
-        {
-            Ok(a) => Ok(a),
-            Err(_) => Err(String::from("Argument not a valid integer")),
-        },
-    }
+    opt.ok_or("Missing required parameter".to_string())
+        .and_then(|arg| arg.parse::<T>().map_err(|_| "Argument not a valid integer".to_string()))
 }
