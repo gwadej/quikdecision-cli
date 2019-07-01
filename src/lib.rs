@@ -12,12 +12,12 @@ mod help;
 
 type StrVec = Vec<String>;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
 {
     let progname = args.next().unwrap();
-    let cmd = args.next().ok_or("Missing decision type".to_string())?;
+    let cmd = args.next().ok_or_else(|| "Missing decision type".to_string())?;
 
     let all_docs = vec![
         ("coin",    coin::api_doc()),
@@ -104,9 +104,9 @@ fn pick_command(args: &mut env::Args) -> Result<Command, String>
 
 fn args_to_strings(args: &mut env::Args) -> Result<Vec<String>,String>
 {
-    let first = args.next().ok_or("Missing required strings".to_string())?;
+    let first = args.next().ok_or_else(|| "Missing required strings".to_string())?;
 
-    let strvec = if first.starts_with("@")
+    let strvec = if first.starts_with('@')
     {
         list_from_file(&first[1..])?
     }
@@ -131,7 +131,7 @@ fn list_from_file(filename: &str) -> Result<StrVec, String>
     let mut file = File::open(filename).map_err(|_| "Cannot open supplied file".to_string())?;
     let mut contents = String::new();
     file.read_to_string(&mut contents).map_err(|_| "Cannot read supplied file".to_string())?;
-    Ok(contents.split("\n")
+    Ok(contents.split('\n')
                .filter(|line| !line.is_empty())
                .map(|s| s.to_string())
                .collect::<StrVec>())
@@ -146,6 +146,6 @@ pub fn int_arg<T>(opt: Option<String>) -> Result<T, String>
 where
 T: std::str::FromStr,
 {
-    opt.ok_or("Missing required parameter".to_string())
+    opt.ok_or_else(|| "Missing required parameter".to_string())
         .and_then(|arg| arg.parse::<T>().map_err(|_| "Argument not a valid integer".to_string()))
 }

@@ -5,7 +5,7 @@ type Help = (&'static str, ApiDoc);
 
 fn format_arg(arg: &str) -> String
 {
-    if arg.ends_with("]") || arg.ends_with("}")
+    if arg.ends_with(']') || arg.ends_with('}')
     {
         arg.to_string()
     }
@@ -15,7 +15,7 @@ fn format_arg(arg: &str) -> String
     }
 }
 
-fn make_clue(cmd: &str, params: &Vec<&str>) -> String
+fn make_clue(cmd: &str, params: &[&str]) -> String
 {
     once(cmd.to_string())
         .chain(params.iter().map(|s| format_arg(*s)))
@@ -68,7 +68,7 @@ pub fn usage(progname: String, cmd: Option<String>, docs: Vec<Help>) -> !
     std::process::exit(1);
 }
 
-fn find_hints<'a>(docs: &'a Vec<Help>, cmd: String) -> Vec<&Help>
+fn find_hints(docs: &[Help], cmd: String) -> Vec<&Help>
 {
     docs.iter()
         .filter(|d| d.0 == cmd)
