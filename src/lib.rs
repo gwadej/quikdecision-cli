@@ -39,14 +39,14 @@ pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
 
     match &cmd[..]
     {
-        "coin" | "flip" => coin::command(),
+        "coin" | "flip" => coin::command().map_err(|e| String::from(e)),
         "pick" => pick_command(&mut args),
-        "percent" | "likely" => percent::command(int_arg::<u32>(args.next())?),
-        "roll"  => dice::command(args_to_string(&mut args)),
-        "draw"  => deck::command(args_to_string(&mut args).as_str()),
-        "select" => select::command(args_to_strings(&mut args)?),
-        "shuffle" => shuffle::command(args_to_strings(&mut args)?),
-        "oracle" => oracle::command(),
+        "percent" | "likely" => percent::command(int_arg::<u32>(args.next())?).map_err(|e| String::from(e)),
+        "roll"  => dice::command(args_to_string(&mut args)).map_err(|e| String::from(e)),
+        "draw"  => deck::command(args_to_string(&mut args).as_str()).map_err(|e| String::from(e)),
+        "select" => select::command(args_to_strings(&mut args)?).map_err(|e| String::from(e)),
+        "shuffle" => shuffle::command(args_to_strings(&mut args)?).map_err(|e| String::from(e)),
+        "oracle" => oracle::command().map_err(|e| String::from(e)),
         "help" => help::usage(progname, args.next(), all_docs),
         "man" => help::help(progname, args.next(), all_docs),
         "version" => version(),
@@ -99,7 +99,7 @@ fn pick_command(args: &mut env::Args) -> Result<Command, String>
 {
     let low  = int_arg::<i32>(args.next()).map_err(|e| format!("low arg: {}", e))?;
     let high = int_arg::<i32>(args.next()).map_err(|e| format!("high arg: {}", e))?;
-    pick::command(low, high)
+    pick::command(low, high).map_err(|e| String::from(e))
 }
 
 fn args_to_strings(args: &mut env::Args) -> Result<Vec<String>,String>
