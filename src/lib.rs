@@ -4,6 +4,7 @@ use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use std::iter::once;
+use eyre::{eyre,bail,WrapErr};
 
 use quikdecision::{coin,pick,percent,dice,deck,select,shuffle,oracle};
 use quikdecision::{Command,ApiDoc};
@@ -14,10 +15,10 @@ type StrVec = Vec<String>;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
+pub fn parse_args(mut args: std::env::Args) -> eyre::Result<Command>
 {
     let progname = args.next().unwrap();
-    let cmd = args.next().ok_or_else(|| "Missing decision type".to_string())?;
+    let cmd = args.next().ok_or_else(|| eyre!("Missing decision type"))?;
 
     let all_docs = vec![
         ("coin",    coin::api_doc()),
@@ -39,18 +40,18 @@ pub fn parse_args(mut args: std::env::Args) -> Result<Command, String>
 
     match &cmd[..]
     {
-        "coin" | "flip" => coin::command().map_err(|e| String::from(e)),
+        "coin" | "flip" => coin::command().wrap_err("Failed coin flip"),
         "pick" => pick_command(&mut args),
-        "percent" | "likely" => percent::command(int_arg::<u32>(args.next())?).map_err(|e| String::from(e)),
-        "roll"  => dice::command(args_to_string(&mut args)).map_err(|e| String::from(e)),
-        "draw"  => deck::command(args_to_string(&mut args).as_str()).map_err(|e| String::from(e)),
-        "select" => select::command(args_to_strings(&mut args)?).map_err(|e| String::from(e)),
-        "shuffle" => shuffle::command(args_to_strings(&mut args)?).map_err(|e| String::from(e)),
-        "oracle" => oracle::command().map_err(|e| String::from(e)),
+        "percent" | "likely" => percent::command(int_arg::<u32>(args.next())?).wrap_err("Failed percent likely"),
+        "roll"  => dice::command(args_to_string(&mut args)).wrap_err("Failed dice roll"),
+        "draw"  => deck::command(args_to_string(&mut args).as_str()).wrap_err("Failed card draw"),
+        "select" => select::command(args_to_strings(&mut args)?).wrap_err("Failed select"),
+        "shuffle" => shuffle::command(args_to_strings(&mut args)?).wrap_err("Failed shuffle"),
+        "oracle" => oracle::command().wrap_err("Failed oracle call"),
         "help" => help::usage(progname, args.next(), all_docs),
         "man" => help::help(progname, args.next(), all_docs),
         "version" => version(),
-        _ => Err("Unknown command".to_string()),
+        _ => bail!("Unknown command"),
     }
 }
 
@@ -95,16 +96,16 @@ fn version_doc() -> ApiDoc
     }
 }
 
-fn pick_command(args: &mut env::Args) -> Result<Command, String>
+fn pick_command(args: &mut env::Args) -> eyre::Result<Command>
 {
-    let low  = int_arg::<i32>(args.next()).map_err(|e| format!("low arg: {}", e))?;
-    let high = int_arg::<i32>(args.next()).map_err(|e| format!("high arg: {}", e))?;
-    pick::command(low, high).map_err(|e| String::from(e))
+    let low  = int_arg::<i32>(args.next()).wrap_err("Bad lower bound")?;
+    let high = int_arg::<i32>(args.next()).wrap_err("Bad upper bound")?;
+    pick::command(low, high).wrap_err("Failed number pick")
 }
 
-fn args_to_strings(args: &mut env::Args) -> Result<Vec<String>,String>
+fn args_to_strings(args: &mut env::Args) -> eyre::Result<Vec<String>>
 {
-    let first = args.next().ok_or_else(|| "Missing required strings".to_string())?;
+    let first = args.next().ok_or_else(|| eyre!("Missing required strings"))?;
 
     let strvec = if first.starts_with('@')
     {
@@ -126,11 +127,11 @@ fn version() -> !
     std::process::exit(1);
 }
 
-fn list_from_file(filename: &str) -> Result<StrVec, String>
+fn list_from_file(filename: &str) -> eyre::Result<StrVec>
 {
-    let mut file = File::open(filename).map_err(|_| "Cannot open supplied file".to_string())?;
+    let mut file = File::open(filename).wrap_err(format!("Cannot open '{}'", filename))?;
     let mut contents = String::new();
-    file.read_to_string(&mut contents).map_err(|_| "Cannot read supplied file".to_string())?;
+    file.read_to_string(&mut contents).wrap_err(format!("Cannot read '{}'", filename))?;
     Ok(contents.split('\n')
                .filter(|line| !line.is_empty())
                .map(|s| s.to_string())
@@ -142,10 +143,11 @@ fn args_to_string(args: &mut env::Args) -> String
     args.collect::<Vec<String>>().join(" ")
 }
 
-pub fn int_arg<T>(opt: Option<String>) -> Result<T, String>
+pub fn int_arg<T>(opt: Option<String>) -> eyre::Result<T>
 where
 T: std::str::FromStr,
 {
-    opt.ok_or_else(|| "Missing required parameter".to_string())
-        .and_then(|arg| arg.parse::<T>().map_err(|_| "Argument not a valid integer".to_string()))
+    opt.ok_or_else(|| eyre!("Missing required parameter"))
+        .and_then(|arg| arg.parse::<T>()
+                        .map_err(|_| eyre!("{} is not a valid {}", arg, std::any::type_name::<T>())))
 }
